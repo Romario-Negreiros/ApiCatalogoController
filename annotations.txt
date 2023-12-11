@@ -1,0 +1,4 @@
+Custom validations pt1: https://www.udemy.com/course/curso-web-api-asp-net-core-essencial/learn/lecture/17657736#notes
+Custom validations pt2: https://www.udemy.com/course/curso-web-api-asp-net-core-essencial/learn/lecture/17657750#notes
+Custom filters: https://www.udemy.com/course/curso-web-api-asp-net-core-essencial/learn/lecture/17657788#notes
+Treating global errors: https://www.udemy.com/course/curso-web-api-asp-net-core-essencial/learn/lecture/17657810#notes
