@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ApiCatalogoController.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class CategoriesController : ControllerBase
     {
@@ -22,7 +22,7 @@ namespace ApiCatalogoController.Controllers
             return Problem("Erro ao processar a requisição!", null, StatusCodes.Status500InternalServerError);
         }
         [HttpGet]
-        public async Task<ActionResult> Get()
+        public async Task<ActionResult<List<Category>>> Get()
         {
             try
             {
@@ -40,7 +40,7 @@ namespace ApiCatalogoController.Controllers
             }
         }
         [HttpGet("id: int")]
-        public async Task<ActionResult> Get(int id)
+        public async Task<ActionResult<Category>> Get(int id)
         {
             try
             {
@@ -58,16 +58,8 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpPost]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult> Post(Category category)
+        public async Task<ActionResult<Category>> Post(Category category)
         {
-            if (category.Name == null)
-            {
-                return BadRequest("O campo 'nome' não pode estar vazio!");
-            }
-            if (category.Description == null)
-            {
-                return BadRequest("O campo 'descrição' não pode estar vazio!");
-            }
             try
             {
                 ctx.Categories.Add(category);
@@ -81,19 +73,11 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpPut("id: int")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult> Put(int id, Category category)
+        public async Task<ActionResult<Category>> Put(int id, Category category)
         {
             if (id != category.CategoryId)
             {
                 return BadRequest("O id da categoria não corresponde com id passado como parametro!");
-            }
-            if (category.Name == null)
-            {
-                return BadRequest("O campo 'nome' não pode estar vazio!");
-            }
-            if (category.Description == null)
-            {
-                return BadRequest("O campo 'descrição' não pode estar vazio!");
             }
             try
             {
@@ -114,7 +98,7 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpDelete("int: id")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<ActionResult<Category>> Delete(int id)
         {
             try
             {

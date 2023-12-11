@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ApiCatalogoController.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class ProductsController : ControllerBase
     {
@@ -23,7 +23,7 @@ namespace ApiCatalogoController.Controllers
             return Problem("Erro ao processar a requisição!", null, StatusCodes.Status500InternalServerError);
         }
         [HttpGet]
-        public async Task<ActionResult> Get()
+        public async Task<ActionResult<List<Product>>> Get()
         {
             try
             {
@@ -40,8 +40,26 @@ namespace ApiCatalogoController.Controllers
                 return HandleServerError(ex);
             }
         }
-        [HttpGet("id: int")]
-        public async Task<ActionResult> Get(int id)
+        //[HttpGet("first")]
+        //public async Task<ActionResult<Product>> GetFirst()
+        //{
+        //    try
+        //    {
+        //        Product? product = await ctx.Products.FirstOrDefaultAsync();
+        //        if (product == null)
+        //        {
+        //            return Ok("Nenhum produto existente!");
+        //        }
+        //        return Ok(product);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return HandleServerError(ex);
+        //    }
+        //}
+        //[HttpGet("id: int")]
+        [HttpGet("{id:int:min(1)}")] // Restrição: id > 0
+        public async Task<ActionResult<Product>> Get(int id)
         {
             try
             {
@@ -59,16 +77,8 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpPost]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult> Post(Product product)
+        public async Task<ActionResult<Product>> Post(Product product)
         {
-            if (product.Name == null)
-            {
-                return BadRequest("O campo 'nome' não pode estar vazio!");
-            }
-            if (product.Description == null)
-            {
-                return BadRequest("O campo 'descrição' não pode estar vazio!");
-            }
             try
             {
                 ctx.Products.Add(product);
@@ -82,19 +92,11 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpPut("id: int")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult> Put(int id, Product product)
+        public async Task<ActionResult<Product>> Put(int id, Product product)
         {
             if (id != product.ProductId)
             {
                 return BadRequest("O id do produto não corresponde com id passado como parametro!");
-            }
-            if (product.Name == null)
-            {
-                return BadRequest("O campo 'nome' não pode estar vazio!");
-            }
-            if (product.Description == null)
-            {
-                return BadRequest("O campo 'descrição' não pode estar vazio!");
             }
             try
             {
@@ -120,7 +122,7 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpDelete("id: int")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<ActionResult<Product>> Delete(int id)
         {
             try
             {
