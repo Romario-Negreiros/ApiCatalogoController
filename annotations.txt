@@ -2,3 +2,5 @@ Custom validations pt1: https://www.udemy.com/course/curso-web-api-asp-net-core-
 Custom validations pt2: https://www.udemy.com/course/curso-web-api-asp-net-core-essencial/learn/lecture/17657750#notes
 Custom filters: https://www.udemy.com/course/curso-web-api-asp-net-core-essencial/learn/lecture/17657788#notes
 Treating global errors: https://www.udemy.com/course/curso-web-api-asp-net-core-essencial/learn/lecture/17657810#notes
+
+EF CORE + ORACLE: https://github.com/oracle/dotnet-db-samples/blob/master/samples/ef-core/get-started/create-model-save-query-scaffold-efc6.cs
