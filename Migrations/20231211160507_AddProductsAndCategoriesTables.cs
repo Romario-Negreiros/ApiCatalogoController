@@ -1,12 +1,11 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Metadata;
+﻿using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace ApiCatalogoController.Migrations
 {
-    public partial class AddProductsAndCategoriesTables : Migration
+    public partial class AddProductsAndCategoriesTables: Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiCatalogoController.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20231211022823_AddProductsAndCategoriesTables")]
-    partial class AddProductsAndCategoriesTables
+    [Migration("20231211160507_CreateCategoriesAndProductsTable")]
+    partial class CreateCategoriesAndProductsTable
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
