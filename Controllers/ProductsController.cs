@@ -1,5 +1,5 @@
-﻿using ApiCatalogoController.Context;
-using ApiCatalogoController.Models;
+﻿using ApiCatalogoController.Models;
+using ApiCatalogoController.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +11,11 @@ namespace ApiCatalogoController.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly AppDbContext ctx;
+        private readonly IUnitOfWork uof;
 
-        public ProductsController(AppDbContext _ctx)
+        public ProductsController(IUnitOfWork _uof)
         {
-            ctx = _ctx;
+            uof = _uof;
         }
         private ObjectResult HandleServerError(Exception ex)
         {
@@ -28,7 +28,7 @@ namespace ApiCatalogoController.Controllers
             try
             {
                 // Limitar a quantidade de produtos retornados por requisição
-                List<Product> products = await ctx.Products.AsNoTracking().Include(p => p.Category).ToListAsync();
+                List<Product> products = await uof.ProductRepository.Get().Include(p => p.Category).ToListAsync();
                 if (!products.Any())
                 {
                     return Ok("Nenhum produto existente!");
@@ -45,7 +45,7 @@ namespace ApiCatalogoController.Controllers
         {
             try
             {
-                Product? product = await ctx.Products.FindAsync(id);
+                Product? product = await uof.ProductRepository.GetById(p => p.ProductId == id);
                 if (product == null)
                 {
                     return NotFound("Produto não encontrada!");
@@ -63,8 +63,8 @@ namespace ApiCatalogoController.Controllers
         {
             try
             {
-                ctx.Products.Add(product);
-                await ctx.SaveChangesAsync();
+                await uof.ProductRepository.Add(product);
+                await uof.Commit();
                 return Created($"/products/{product.ProductId}", product);
             }
             catch (Exception ex)
@@ -74,7 +74,7 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpPut("id: int")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult<Product>> Put(int id, Product product)
+        public async Task<ActionResult> Put(int id, Product product)
         {
             if (id != product.ProductId)
             {
@@ -82,20 +82,9 @@ namespace ApiCatalogoController.Controllers
             }
             try
             {
-                Product? productInDb = await ctx.Products.FindAsync(id);
-                if (productInDb == null)
-                {
-                    return NotFound("O produto que deseja atualizar não foi encontrado!");
-                }
-                productInDb.Name = product.Name;
-                productInDb.Description = product.Description;
-                productInDb.Price = product.Price;
-                productInDb.ImageUrl = product.ImageUrl;
-                productInDb.RegistrationDate = product.RegistrationDate;
-                productInDb.Stock = product.Stock;
-                productInDb.CategoryId = product.CategoryId;
-                await ctx.SaveChangesAsync();
-                return Ok(productInDb);
+                uof.ProductRepository.Update(product);
+                await uof.Commit();
+                return Ok();
             }
             catch (Exception ex)
             {
@@ -104,17 +93,17 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpDelete("id: int")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult<Product>> Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
             try
             {
-                Product? produto = await ctx.Products.FindAsync(id);
+                Product? produto = await uof.ProductRepository.GetById(p => p.ProductId == id);
                 if (produto == null)
                 {
                     return NotFound("O produto que deseja deletar não existe!");
                 }
-                ctx.Products.Remove(produto);
-                await ctx.SaveChangesAsync();
+                uof.ProductRepository.Delete(produto);
+                await uof.Commit();
                 return NoContent();
             }
             catch (Exception ex)
