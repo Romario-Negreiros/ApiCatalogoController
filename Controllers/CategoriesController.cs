@@ -1,5 +1,5 @@
-﻿using ApiCatalogoController.Context;
-using ApiCatalogoController.Models;
+﻿using ApiCatalogoController.Models;
+using ApiCatalogoController.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +11,10 @@ namespace ApiCatalogoController.Controllers
     [ApiController]
     public class CategoriesController : ControllerBase
     {
-        private readonly AppDbContext ctx;
-        public CategoriesController(AppDbContext _ctx)
+        private readonly IUnitOfWork uof;
+        public CategoriesController(IUnitOfWork _uof)
         {
-            ctx = _ctx;
+            uof = _uof;
         }
         private ObjectResult HandleServerError(Exception ex)
         {
@@ -27,7 +27,7 @@ namespace ApiCatalogoController.Controllers
             try
             {
                 // Limitar a quantidade de categorias retornados por requisição
-                List<Category> categories = await ctx.Categories.AsNoTracking().ToListAsync();
+                List<Category> categories = await uof.CategoryRepository.Get().ToListAsync();
                 if (!categories.Any())
                 {
                     return Ok("Nenhuma categoria existente!");
@@ -44,7 +44,7 @@ namespace ApiCatalogoController.Controllers
         {
             try
             {
-                Category? categories = await ctx.Categories.FindAsync(id);
+                Category? categories = await uof.CategoryRepository.GetById(c => c.CategoryId == id);
                 if (categories is null)
                 {
                     return NotFound("Categoria não encontrada!");
@@ -56,14 +56,27 @@ namespace ApiCatalogoController.Controllers
                 return HandleServerError(ex);
             }
         }
+        //[HttpGet("{id: int}/products")]
+        //public async Task<ActionResult<List<Product>>> GetCategoryProducts(int id)
+        //{
+        //    try
+        //    {
+        //        List<Product> categoryProducts = await uof.CategoryRepository.GetCategoryProducts(id);
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //        return HandleServerError(ex);
+        //    }
+        //}
         [HttpPost]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult<Category>> Post(Category category)
         {
             try
             {
-                ctx.Categories.Add(category);
-                await ctx.SaveChangesAsync();
+                await uof.CategoryRepository.Add(category);
+                await uof.Commit();
                 return Created($"/categories/{category.CategoryId}", category);
             }
             catch (Exception ex)
@@ -73,7 +86,7 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpPut("id: int")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult<Category>> Put(int id, Category category)
+        public async Task<ActionResult> Put(int id, Category category)
         {
             if (id != category.CategoryId)
             {
@@ -81,15 +94,10 @@ namespace ApiCatalogoController.Controllers
             }
             try
             {
-                Category? categoryInDb = await ctx.Categories.FindAsync(id);
-                if (categoryInDb == null)
-                {
-                    return NotFound("A categoria que deseja atualizar não foi encontrada!");
-                }
-                categoryInDb.Name = category.Name;
-                categoryInDb.Description = category.Description;
-                await ctx.SaveChangesAsync();
-                return Ok(categoryInDb);
+                uof.CategoryRepository.Update(category);
+                await uof.Commit();
+                Category? updatedCategory = await uof.CategoryRepository.GetById(c => c.CategoryId == id);
+                return Ok(updatedCategory);
             }
             catch (Exception ex)
             {
@@ -98,17 +106,17 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpDelete("int: id")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult<Category>> Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
             try
             {
-                Category? category = await ctx.Categories.FindAsync(id);
+                Category? category = await uof.CategoryRepository.GetById(c => c.CategoryId == id);
                 if (category == null)
                 {
                     return NotFound("A categoria que deseja deletar não existe!");
                 }
-                ctx.Categories.Remove(category);
-                await ctx.SaveChangesAsync();
+                uof.CategoryRepository.Delete(category);
+                await uof.Commit();
                 return NoContent();
             }
             catch (Exception ex)

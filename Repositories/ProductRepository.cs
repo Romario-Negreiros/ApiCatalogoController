@@ -1,5 +1,6 @@
 ﻿using ApiCatalogoController.Context;
 using ApiCatalogoController.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiCatalogoController.Repositories
 {
@@ -9,9 +10,9 @@ namespace ApiCatalogoController.Repositories
         {
         }
 
-        public IEnumerable<Product> GetProductsByPrice(int minRange, int maxRange)
+        public async Task<IEnumerable<Product>> GetProductsByPrice(int minRange, int maxRange)
         {
-            return Get().Where(p => p.Price >= minRange && p.Price <= maxRange).ToList();
+            return await Get().Where(p => p.Price >= minRange && p.Price <= maxRange).ToListAsync();
         }
     }
 }

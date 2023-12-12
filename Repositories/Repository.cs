@@ -11,9 +11,9 @@ namespace ApiCatalogoController.Repositories
         {
             context = _context;
         }
-        public void Add(T entity)
+        public async Task Add(T entity)
         {
-            context.Set<T>().Add(entity);
+            await context.Set<T>().AddAsync(entity);
         }
 
         public void Delete(T entity)
@@ -26,9 +26,9 @@ namespace ApiCatalogoController.Repositories
             return context.Set<T>().AsNoTracking();
         }
 
-        public T? GetById(Expression<Func<T, bool>> predicate)
+        public async Task<T?> GetById(Expression<Func<T, bool>> predicate)
         {
-            return context.Set<T>().SingleOrDefault(predicate);
+            return await context.Set<T>().SingleOrDefaultAsync(predicate);
         }
 
         public void Update(T entity)

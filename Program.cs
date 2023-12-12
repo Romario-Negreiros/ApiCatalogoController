@@ -1,5 +1,6 @@
 using ApiCatalogoController.Extensions;
 using ApiCatalogoController.Services;
+using ApiCatalogoController.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,7 @@ builder.Services.AddMySqlDbContext(builder.Configuration);
 
 builder.Services.AddSingleton<IJwtService>(new JwtService());
 builder.Services.AddSingleton(builder.Configuration);
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 var app = builder.Build();
 
