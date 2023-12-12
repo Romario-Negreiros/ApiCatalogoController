@@ -40,24 +40,6 @@ namespace ApiCatalogoController.Controllers
                 return HandleServerError(ex);
             }
         }
-        //[HttpGet("first")]
-        //public async Task<ActionResult<Product>> GetFirst()
-        //{
-        //    try
-        //    {
-        //        Product? product = await ctx.Products.FirstOrDefaultAsync();
-        //        if (product == null)
-        //        {
-        //            return Ok("Nenhum produto existente!");
-        //        }
-        //        return Ok(product);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return HandleServerError(ex);
-        //    }
-        //}
-        //[HttpGet("id: int")]
         [HttpGet("{id:int:min(1)}")] // Restrição: id > 0
         public async Task<ActionResult<Product>> Get(int id)
         {
