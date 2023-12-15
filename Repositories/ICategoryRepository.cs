@@ -4,6 +4,6 @@ namespace ApiCatalogoController.Repositories
 {
     public interface ICategoryRepository : IRepository<Category>
     {
-        Task<List<Category>> GetCategoryProducts(int id);
+        Task<Category?> GetCategoryProducts(int id);
     }
 }

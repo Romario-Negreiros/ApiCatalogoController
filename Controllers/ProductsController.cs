@@ -1,5 +1,7 @@
-﻿using ApiCatalogoController.Models;
+﻿using ApiCatalogoController.DTOs;
+using ApiCatalogoController.Models;
 using ApiCatalogoController.Repositories;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +14,12 @@ namespace ApiCatalogoController.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly IUnitOfWork uof;
+        private readonly IMapper mapper;
 
-        public ProductsController(IUnitOfWork _uof)
+        public ProductsController(IUnitOfWork _uof, IMapper _mapper)
         {
             uof = _uof;
+            mapper = _mapper;
         }
         private ObjectResult HandleServerError(Exception ex)
         {
@@ -23,7 +27,7 @@ namespace ApiCatalogoController.Controllers
             return Problem("Erro ao processar a requisição!", null, StatusCodes.Status500InternalServerError);
         }
         [HttpGet]
-        public async Task<ActionResult<List<Product>>> Get()
+        public async Task<ActionResult> Get()
         {
             try
             {
@@ -33,7 +37,8 @@ namespace ApiCatalogoController.Controllers
                 {
                     return Ok("Nenhum produto existente!");
                 }
-                return Ok(products);
+                List<ProductDTO> productsDTO = mapper.Map<List<ProductDTO>>(products);
+                return Ok(productsDTO);
             }
             catch (Exception ex)
             {
@@ -41,16 +46,17 @@ namespace ApiCatalogoController.Controllers
             }
         }
         [HttpGet("{id:int:min(1)}")] // Restrição: id > 0
-        public async Task<ActionResult<Product>> Get(int id)
+        public async Task<ActionResult> Get(int id)
         {
             try
             {
                 Product? product = await uof.ProductRepository.GetById(p => p.ProductId == id);
                 if (product == null)
                 {
-                    return NotFound("Produto não encontrada!");
+                    return NotFound("Produto não encontrado!");
                 }
-                return Ok(product);
+                ProductDTO productDTO = mapper.Map<ProductDTO>(product);
+                return Ok(productDTO);
             }
             catch (Exception ex)
             {
@@ -58,14 +64,17 @@ namespace ApiCatalogoController.Controllers
             }
         }
         [HttpPost]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult<Product>> Post(Product product)
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<ActionResult> Post([FromBody] ProductDTO productDTO)
         {
             try
             {
+                Product product = mapper.Map<Product>(productDTO);
+                product.RegistrationDate = DateTime.Now;
                 await uof.ProductRepository.Add(product);
                 await uof.Commit();
-                return Created($"/products/{product.ProductId}", product);
+                ProductDTO updatedProductDTO = mapper.Map<ProductDTO>(product);
+                return Created($"/products/{updatedProductDTO.ProductId}", updatedProductDTO);
             }
             catch (Exception ex)
             {
@@ -74,14 +83,15 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpPut("id: int")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult> Put(int id, Product product)
+        public async Task<ActionResult> Put(int id, ProductDTO productDTO)
         {
-            if (id != product.ProductId)
+            if (id != productDTO.ProductId)
             {
                 return BadRequest("O id do produto não corresponde com id passado como parametro!");
             }
             try
             {
+                Product product = mapper.Map<Product>(productDTO);
                 uof.ProductRepository.Update(product);
                 await uof.Commit();
                 return Ok();
