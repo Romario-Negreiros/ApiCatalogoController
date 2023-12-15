@@ -1,11 +1,13 @@
 ﻿using ApiCatalogoController.DTOs;
 using ApiCatalogoController.Models;
+using ApiCatalogoController.Pagination;
 using ApiCatalogoController.Repositories;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace ApiCatalogoController.Controllers
 {
@@ -26,24 +28,54 @@ namespace ApiCatalogoController.Controllers
             return Problem("Erro ao processar a requisição!", null, StatusCodes.Status500InternalServerError);
         }
         [HttpGet]
-        public async Task<ActionResult> Get()
+        public async Task<ActionResult> GetCategories([FromQuery] PaginationParameters paginationParameters)
         {
             try
             {
-                // Limitar a quantidade de categorias retornados por requisição
-                List<Category> categories = await uof.CategoryRepository.Get().ToListAsync();
+                PagedList<Category> categories = await uof.CategoryRepository.GetCategories(paginationParameters);
                 if (!categories.Any())
                 {
-                    return Ok("Nenhuma categoria existente!");
+                    return NotFound("Nenhuma categoria existente!");
                 }
+
+                var metadata = new
+                {
+                    categories.TotalCount,
+                    categories.PageSize,
+                    categories.CurrentPage,
+                    categories.TotalPages,
+                    categories.HasNext,
+                    categories.HasPrevious,
+                };
+                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
                 List<CategoryDTO> categoriesDTO = mapper.Map<List<CategoryDTO>>(categories);
-                return Ok(categories);
+                return Ok(categoriesDTO);
             }
             catch (Exception ex)
             {
                 return HandleServerError(ex);
             }
         }
+        //[HttpGet]
+        //public async Task<ActionResult> Get()
+        //{
+        //    try
+        //    {
+        //        // Limitar a quantidade de categorias retornados por requisição
+        //        List<Category> categories = await uof.CategoryRepository.Get().ToListAsync();
+        //        if (!categories.Any())
+        //        {
+        //            return Ok("Nenhuma categoria existente!");
+        //        }
+        //        List<CategoryDTO> categoriesDTO = mapper.Map<List<CategoryDTO>>(categories);
+        //        return Ok(categories);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return HandleServerError(ex);
+        //    }
+        //}
         [HttpGet("id: int")]
         public async Task<ActionResult> Get(int id)
         {
@@ -76,7 +108,7 @@ namespace ApiCatalogoController.Controllers
         //    }
         //}
         [HttpPost]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult> Post(CategoryDTO categoryDTO)
         {
             try
@@ -123,7 +155,7 @@ namespace ApiCatalogoController.Controllers
                 if (category == null)
                 {
                     return NotFound("A categoria que deseja deletar não existe!");
-                }   
+                }
                 uof.CategoryRepository.Delete(category);
                 await uof.Commit();
                 return NoContent();
