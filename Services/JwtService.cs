@@ -1,33 +1,43 @@
-﻿using ApiCatalogoController.Models;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using ApiCatalogoController.DTOs;
 using Microsoft.IdentityModel.Tokens;
 
 namespace ApiCatalogoController.Services
 {
     public class JwtService : IJwtService
     {
-        public string GenerateJwt(string key, string issuer, string audience, User user)
+        public IConfiguration configuration;
+        public JwtService(IConfiguration _configuration)
+        {
+            configuration = _configuration;
+        }
+        public UserTokenDTO GenerateJwt(string userEmail)
         {
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.UniqueName, userEmail),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
 
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(issuer: issuer, audience: audience, claims: claims, expires: DateTime.Now.AddMinutes(120), signingCredentials: credentials);
-        
-            var tokenHandler = new JwtSecurityTokenHandler();
+            // Token expires two hours after generation
+            var expiration = DateTime.Now.AddMinutes(120);
 
-            var stringToken = tokenHandler.WriteToken(token);
+            var token = new JwtSecurityToken(issuer: configuration["Jwt:Issuer"], audience: configuration["Jwt:Audience"], claims: claims, expires: expiration, signingCredentials: credentials);
 
-            return stringToken;
+            return new UserTokenDTO
+            {
+                Authenticated = true,
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                Expiration = expiration,
+                Message = $"Token generated at {DateTime.Now:F}"
+        }
         }
     }
 }

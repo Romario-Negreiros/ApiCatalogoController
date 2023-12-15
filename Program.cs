@@ -14,6 +14,8 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 
 builder.Services.AddMySqlDbContext(builder.Configuration);
 
+builder.Services.AddIdentity();
+
 var mappingConfig = new MapperConfiguration(mc =>
 {
     mc.AddProfile(new MappingProfile());
@@ -22,7 +24,7 @@ var mappingConfig = new MapperConfiguration(mc =>
 IMapper mapper = mappingConfig.CreateMapper();
 
 builder.Services.AddSingleton(mapper);
-builder.Services.AddSingleton<IJwtService>(new JwtService());
+builder.Services.AddSingleton<IJwtService>(new JwtService(builder.Configuration));
 builder.Services.AddSingleton(builder.Configuration);
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -31,6 +33,8 @@ var app = builder.Build();
 app.UseOpenApi();
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

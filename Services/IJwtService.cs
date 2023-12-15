@@ -1,9 +1,9 @@
-﻿using ApiCatalogoController.Models;
+﻿using ApiCatalogoController.DTOs;
 
 namespace ApiCatalogoController.Services
 {
     public interface IJwtService
     {
-        string GenerateJwt(string key, string issuer, string audience, User user);
+        UserTokenDTO GenerateJwt(string userEmail);
     }
 }
