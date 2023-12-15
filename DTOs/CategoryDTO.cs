@@ -1,4 +1,7 @@
-﻿namespace ApiCatalogoController.DTOs
+﻿
+using System.Text.Json.Serialization;
+
+namespace ApiCatalogoController.DTOs
 {
     public class CategoryDTO
     {

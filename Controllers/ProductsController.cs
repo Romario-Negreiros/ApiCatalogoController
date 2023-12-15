@@ -1,11 +1,13 @@
 ﻿using ApiCatalogoController.DTOs;
 using ApiCatalogoController.Models;
+using ApiCatalogoController.Pagination;
 using ApiCatalogoController.Repositories;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace ApiCatalogoController.Controllers
 {
@@ -27,16 +29,45 @@ namespace ApiCatalogoController.Controllers
             return Problem("Erro ao processar a requisição!", null, StatusCodes.Status500InternalServerError);
         }
         [HttpGet]
-        public async Task<ActionResult> Get()
+        //public async Task<ActionResult> Get()
+        //{
+        //    try
+        //    {
+        //        // Limitar a quantidade de produtos retornados por requisição
+        //        List<Product> products = await uof.ProductRepository.Get().Include(p => p.Category).ToListAsync();
+        //        if (!products.Any())
+        //        {
+        //            return Ok("Nenhum produto existente!");
+        //        }
+        //        List<ProductDTO> productsDTO = mapper.Map<List<ProductDTO>>(products);
+        //        return Ok(productsDTO);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return HandleServerError(ex);
+        //    }
+        //}
+        [HttpGet]
+        public async Task<ActionResult> Get([FromQuery] PaginationParameters paginationParameters)
         {
             try
             {
-                // Limitar a quantidade de produtos retornados por requisição
-                List<Product> products = await uof.ProductRepository.Get().Include(p => p.Category).ToListAsync();
+                PagedList<Product> products = await uof.ProductRepository.GetProducts(paginationParameters);
                 if (!products.Any())
                 {
-                    return Ok("Nenhum produto existente!");
+                    return NotFound("Nenhum produto existente!");
                 }
+                var metadata = new
+                {
+                    products.TotalCount,
+                    products.PageSize,
+                    products.CurrentPage,
+                    products.TotalPages,
+                    products.HasNext,
+                    products.HasPrevious,
+                };
+                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
                 List<ProductDTO> productsDTO = mapper.Map<List<ProductDTO>>(products);
                 return Ok(productsDTO);
             }
