@@ -10,9 +10,9 @@ namespace ApiCatalogoController.Repositories
         {
         }
 
-        public async Task<List<Category>> GetCategoryProducts(int id)
+        public async Task<Category?> GetCategoryProducts(int id)
         {
-            return await Get().Include(c => c.Products).Where(c => c.CategoryId == id).ToListAsync();
+            return await Get().Include(c => c.Products).Where(c => c.CategoryId == id).FirstOrDefaultAsync();
         }
     }
 }

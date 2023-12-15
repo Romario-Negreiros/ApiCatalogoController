@@ -1,5 +1,7 @@
-﻿using ApiCatalogoController.Models;
+﻿using ApiCatalogoController.DTOs;
+using ApiCatalogoController.Models;
 using ApiCatalogoController.Repositories;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,9 +14,11 @@ namespace ApiCatalogoController.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly IUnitOfWork uof;
-        public CategoriesController(IUnitOfWork _uof)
+        private readonly IMapper mapper;
+        public CategoriesController(IUnitOfWork _uof, IMapper _mapper)
         {
             uof = _uof;
+            mapper = _mapper;
         }
         private ObjectResult HandleServerError(Exception ex)
         {
@@ -22,7 +26,7 @@ namespace ApiCatalogoController.Controllers
             return Problem("Erro ao processar a requisição!", null, StatusCodes.Status500InternalServerError);
         }
         [HttpGet]
-        public async Task<ActionResult<List<Category>>> Get()
+        public async Task<ActionResult> Get()
         {
             try
             {
@@ -32,6 +36,7 @@ namespace ApiCatalogoController.Controllers
                 {
                     return Ok("Nenhuma categoria existente!");
                 }
+                List<CategoryDTO> categoriesDTO = mapper.Map<List<CategoryDTO>>(categories);
                 return Ok(categories);
             }
             catch (Exception ex)
@@ -40,16 +45,17 @@ namespace ApiCatalogoController.Controllers
             }
         }
         [HttpGet("id: int")]
-        public async Task<ActionResult<Category>> Get(int id)
+        public async Task<ActionResult> Get(int id)
         {
             try
             {
-                Category? categories = await uof.CategoryRepository.GetById(c => c.CategoryId == id);
-                if (categories is null)
+                Category? category = await uof.CategoryRepository.GetCategoryProducts(id);
+                if (category is null)
                 {
                     return NotFound("Categoria não encontrada!");
                 }
-                return Ok(categories);
+                CategoryDTO categoryDTO = mapper.Map<CategoryDTO>(category);
+                return Ok(categoryDTO);
             }
             catch (Exception ex)
             {
@@ -71,13 +77,15 @@ namespace ApiCatalogoController.Controllers
         //}
         [HttpPost]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult<Category>> Post(Category category)
+        public async Task<ActionResult> Post(CategoryDTO categoryDTO)
         {
             try
             {
+                Category category = mapper.Map<Category>(categoryDTO);
                 await uof.CategoryRepository.Add(category);
                 await uof.Commit();
-                return Created($"/categories/{category.CategoryId}", category);
+                CategoryDTO updatedCategoryDTO = mapper.Map<CategoryDTO>(category);
+                return Created($"/categories/{category.CategoryId}", updatedCategoryDTO);
             }
             catch (Exception ex)
             {
@@ -86,18 +94,19 @@ namespace ApiCatalogoController.Controllers
         }
         [HttpPut("id: int")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult> Put(int id, Category category)
+        public async Task<ActionResult> Put(int id, CategoryDTO categoryDTO)
         {
-            if (id != category.CategoryId)
+            if (id != categoryDTO.CategoryId)
             {
                 return BadRequest("O id da categoria não corresponde com id passado como parametro!");
             }
             try
             {
+                Category category = mapper.Map<Category>(categoryDTO);
                 uof.CategoryRepository.Update(category);
                 await uof.Commit();
                 Category? updatedCategory = await uof.CategoryRepository.GetById(c => c.CategoryId == id);
-                return Ok(updatedCategory);
+                return Ok(mapper.Map<CategoryDTO>(updatedCategory));
             }
             catch (Exception ex)
             {
@@ -114,7 +123,7 @@ namespace ApiCatalogoController.Controllers
                 if (category == null)
                 {
                     return NotFound("A categoria que deseja deletar não existe!");
-                }
+                }   
                 uof.CategoryRepository.Delete(category);
                 await uof.Commit();
                 return NoContent();
