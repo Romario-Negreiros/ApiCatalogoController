@@ -13,6 +13,7 @@ namespace ApiCatalogoController.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class CategoriesController : ControllerBase
     {
         private readonly IUnitOfWork uof;

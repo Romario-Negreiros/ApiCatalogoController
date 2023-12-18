@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace ApiCatalogoController.Models
@@ -11,6 +12,8 @@ namespace ApiCatalogoController.Models
         [Required(ErrorMessage = "O campo 'descrição' não pode estar vázio!")]
         public string Description { get; set; } = default!;
         [Required(ErrorMessage = "O campo 'preço' não pode estar vázio!")]
+        [DataType(DataType.Currency)]
+        [Column(TypeName = "decimal(8, 2)")]
         public decimal Price { get; set; } = default!;
         public string? ImageUrl { get; set; }
         [Required(ErrorMessage = "O campo 'estoque' não pode estar vázio!")]
